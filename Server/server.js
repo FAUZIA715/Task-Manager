@@ -16,6 +16,7 @@ app.use(express.json());
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK", message: "Server is healthy" });
 });
+// Task route
 app.use("/api/tasks", taskRoutes);
 const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
