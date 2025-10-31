@@ -24,7 +24,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Star } from "lucide-react";
 import {
   fetchTasks,
@@ -542,11 +542,11 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentList, setCurrentList] = useState("My Task List");
-  const [lastList, setLastList] = useState("My Task List");
+  // const [lastList, setLastList] = useState("My Task List");
   const [lists, setLists] = useState<string[]>(["My Task List"]);
-  const [currentView, setCurrentView] = useState<
-    "active" | "completed" | "starred"
-  >("active");
+  // const [currentView, setCurrentView] = useState<
+  //   "active" | "completed" | "starred"
+  // >("active");
 
   useEffect(() => {
     if (user?.id) {
