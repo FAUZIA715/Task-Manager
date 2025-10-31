@@ -13,7 +13,7 @@ export const fetchTasks = async (listName: string = "My Task List") => {
   if (!res.ok) throw new Error("Failed to fetch tasks");
   return res.json();
 };
-
+// Create Task API Call
 export const createTask = async (taskData: {
   title: string;
   description: string;
@@ -32,7 +32,7 @@ export const createTask = async (taskData: {
   if (!res.ok) throw new Error("Failed to create task");
   return res.json();
 };
-
+// Update Task API Call
 export const updateTask = async (
   id: string,
   updates: Partial<{
@@ -56,7 +56,7 @@ export const updateTask = async (
   if (!res.ok) throw new Error("Failed to update task");
   return res.json();
 };
-
+// Delete Task API Call
 export const deleteTaskApi = async (id: string) => {
   const token = getToken();
   const res = await fetch(`${API_URL}/tasks/${id}`, {
@@ -66,12 +66,32 @@ export const deleteTaskApi = async (id: string) => {
   if (!res.ok) throw new Error("Failed to delete task");
   return res.json();
 };
-
+// Fetch Starred Tasks API Call
 export const fetchStarredTasks = async () => {
   const token = getToken();
   const res = await fetch(`${API_URL}/tasks/starred`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("Failed to fetch starred tasks");
+  return res.json();
+};
+//Change Password API Call
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string
+) => {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/auth/change-password`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to change password");
+  }
   return res.json();
 };

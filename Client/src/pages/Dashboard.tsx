@@ -11,6 +11,7 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { useAuth } from "../context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,13 +26,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-import { Star } from "lucide-react";
+import { Star, Eye, EyeOff } from "lucide-react";
 import {
   fetchTasks,
   fetchStarredTasks,
   createTask,
   updateTask,
   deleteTaskApi,
+  changePassword,
 } from "../api/taskApi";
 
 interface Task {
@@ -574,6 +576,17 @@ const Dashboard = () => {
     description: "",
     dueDate: "",
   });
+  const [changePasswordDialog, setChangePasswordDialog] = useState({
+    open: false,
+  });
+  const [changePasswordForm, setChangePasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   /* Fetch tasks */
   const loadTasks = async (listName: string = currentList) => {
@@ -792,6 +805,37 @@ const Dashboard = () => {
     setListDialog({ open: false });
   };
 
+  /* Change Password */
+  const handleChangePassword = async () => {
+    if (
+      !changePasswordForm.currentPassword ||
+      !changePasswordForm.newPassword ||
+      changePasswordForm.newPassword !== changePasswordForm.confirmPassword
+    ) {
+      toast.error("Passwords do not match or are empty");
+      return;
+    }
+    try {
+      await changePassword(
+        changePasswordForm.currentPassword,
+        changePasswordForm.newPassword
+      );
+      toast.success("Password changed successfully");
+      setChangePasswordDialog({ open: false });
+      setChangePasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+    } catch (error) {
+      console.error("Failed to change password:", error);
+      toast.error("Failed to change password");
+    }
+  };
+
   /* Handle Drag End */
   const handleDragEnd = async (event: any, isCompleted: boolean) => {
     const { active, over } = event;
@@ -897,9 +941,18 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
-        <Button onClick={logout} variant="secondary">
-          Logout
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setChangePasswordDialog({ open: true })}
+          >
+            Change Password
+          </Button>
+          <Button onClick={logout} variant="secondary">
+            Logout
+          </Button>
+        </div>
       </div>
       <div className=" max-w-2xl mx-auto mb-8">
         {/* Add Task */}
@@ -1129,6 +1182,107 @@ const Dashboard = () => {
                 Cancel
               </Button>
               <Button onClick={createList}>Create</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Change Password Dialog */}
+        <Dialog
+          open={changePasswordDialog.open}
+          onOpenChange={(open) => setChangePasswordDialog({ open })}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Change Password</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="relative">
+                <Input
+                  type={showCurrentPassword ? "text" : "password"}
+                  placeholder="Current Password"
+                  value={changePasswordForm.currentPassword}
+                  onChange={(e) =>
+                    setChangePasswordForm({
+                      ...changePasswordForm,
+                      currentPassword: e.target.value,
+                    })
+                  }
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              <div className="relative">
+                <Input
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="New Password"
+                  value={changePasswordForm.newPassword}
+                  onChange={(e) =>
+                    setChangePasswordForm({
+                      ...changePasswordForm,
+                      newPassword: e.target.value,
+                    })
+                  }
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm New Password"
+                  value={changePasswordForm.confirmPassword}
+                  onChange={(e) =>
+                    setChangePasswordForm({
+                      ...changePasswordForm,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setChangePasswordDialog({ open: false })}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleChangePassword}>Change Password</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
