@@ -2,18 +2,56 @@ import Task from "../model/taskModel.js";
 
 // Get all tasks for a user, optionally filtered by listName
 export const getTasks = async (req, res) => {
-  const { listName = "My Task List" } = req.query;
-  const tasks = await Task.find({ userId: req.userId, listName }).sort({
-    order: 1,
-  });
+  const { listName = "My Task List", sort = "order" } = req.query;
+  const query = { userId: req.userId, listName };
+
+  let tasks;
+  if (sort === "deadline") {
+    // Sort by dueDate ascending, nulls last
+    tasks = await Task.aggregate([
+      { $match: query },
+      {
+        $addFields: {
+          dueDateSort: { $ifNull: ["$dueDate", Number.MAX_SAFE_INTEGER] },
+        },
+      },
+      { $sort: { dueDateSort: 1 } },
+    ]);
+  } else if (sort === "added") {
+    tasks = await Task.find(query).sort({ createdAt: -1 });
+  } else {
+    // Default to order
+    tasks = await Task.find(query).sort({ order: 1 });
+  }
   res.json(tasks);
 };
 
 // Get starred tasks for a user
 export const getStarredTasks = async (req, res) => {
-  const tasks = await Task.find({ userId: req.userId, starred: true }).sort({
-    order: 1,
-  });
+  const { sort = "order" } = req.query;
+
+  let tasks;
+  if (sort === "deadline") {
+    // Sort by dueDate ascending, nulls last
+    tasks = await Task.aggregate([
+      { $match: { userId: req.userId, starred: true } },
+      {
+        $addFields: {
+          dueDateSort: { $ifNull: ["$dueDate", Number.MAX_SAFE_INTEGER] },
+        },
+      },
+      { $sort: { dueDateSort: 1 } },
+    ]);
+  } else if (sort === "added") {
+    tasks = await Task.find({ userId: req.userId, starred: true }).sort({
+      createdAt: -1,
+    });
+  } else {
+    // Default to order
+    tasks = await Task.find({ userId: req.userId, starred: true }).sort({
+      order: 1,
+    });
+  }
   res.json(tasks);
 };
 

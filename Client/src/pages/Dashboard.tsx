@@ -547,6 +547,7 @@ const Dashboard = () => {
   const [currentList, setCurrentList] = useState("My Task List");
   // const [lastList, setLastList] = useState("My Task List");
   const [lists, setLists] = useState<string[]>(["My Task List"]);
+  const [sortBy, setSortBy] = useState<"order" | "deadline" | "added">("order");
   // const [currentView, setCurrentView] = useState<
   //   "active" | "completed" | "starred"
   // >("active");
@@ -594,9 +595,9 @@ const Dashboard = () => {
     try {
       let data;
       if (listName === "Starred") {
-        data = await fetchStarredTasks();
+        data = await fetchStarredTasks(sortBy);
       } else {
-        data = await fetchTasks(listName);
+        data = await fetchTasks(listName, sortBy);
       }
       const mappedTasks = data.map((task: any) => ({
         id: task._id,
@@ -639,7 +640,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (user?.id) loadTasks(currentList);
-  }, [user?.id, currentList]);
+  }, [user?.id, currentList, sortBy]);
 
   /* Input Handler */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -967,6 +968,30 @@ const Dashboard = () => {
                     )}
                   </div>
                 ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Sort:{" "}
+                  {sortBy === "order"
+                    ? "Order"
+                    : sortBy === "deadline"
+                    ? "Deadline"
+                    : "Added"}{" "}
+                  ▼
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => setSortBy("order")}>
+                  Order
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("deadline")}>
+                  Deadline
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("added")}>
+                  Added
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button

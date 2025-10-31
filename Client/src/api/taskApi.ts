@@ -2,10 +2,15 @@ export const API_URL = import.meta.env.VITE_BASE_URL;
 
 export const getToken = () => localStorage.getItem("token");
 
-export const fetchTasks = async (listName: string = "My Task List") => {
+export const fetchTasks = async (
+  listName: string = "My Task List",
+  sort: string = "order"
+) => {
   const token = getToken();
   const res = await fetch(
-    `${API_URL}/tasks?listName=${encodeURIComponent(listName)}`,
+    `${API_URL}/tasks?listName=${encodeURIComponent(
+      listName
+    )}&sort=${encodeURIComponent(sort)}`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
@@ -67,11 +72,14 @@ export const deleteTaskApi = async (id: string) => {
   return res.json();
 };
 // Fetch Starred Tasks API Call
-export const fetchStarredTasks = async () => {
+export const fetchStarredTasks = async (sort: string = "order") => {
   const token = getToken();
-  const res = await fetch(`${API_URL}/tasks/starred`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await fetch(
+    `${API_URL}/tasks/starred?sort=${encodeURIComponent(sort)}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
   if (!res.ok) throw new Error("Failed to fetch starred tasks");
   return res.json();
 };
