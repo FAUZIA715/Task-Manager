@@ -22,7 +22,7 @@ const AppContent = () => {
 
   useEffect(() => {
     // Prevent back navigation after logout and forward navigation on login page
-    const handlePopState = (event: PopStateEvent) => {
+    const handlePopState = (_event: PopStateEvent) => {
       if (!user) {
         // If user is not logged in, prevent going back and redirect to login
         window.history.replaceState(null, "", "/login");
