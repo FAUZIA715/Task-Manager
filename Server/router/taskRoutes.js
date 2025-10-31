@@ -5,12 +5,12 @@ import {
   updateTask,
   deleteTask,
 } from "../controller/taskController.js";
-import { verifyToken } from "../middleware/authmiddleware.js";
+import { authMiddleware } from "../middleware/authmiddleware.js";
 const router = express.Router();
-router.use(verifyToken);
-router.get("/:userId", getTasks);
-router.post("/", createTask);
-router.put("/:id", updateTask);
-router.delete("/:id", deleteTask);
+
+router.get("/", authMiddleware, getTasks);
+router.post("/", authMiddleware, createTask);
+router.put("/:id", authMiddleware, updateTask);
+router.delete("/:id", authMiddleware, deleteTask);
 
 export default router;

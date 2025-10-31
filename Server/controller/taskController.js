@@ -8,12 +8,13 @@ export const getTasks = async (req, res) => {
 
 // Create new task
 export const createTask = async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, dueDate } = req.body;
   const task = await Task.create({
     userId: req.userId,
     title,
     description,
     completed: false,
+    dueDate,
   });
   res.status(201).json(task);
 };
@@ -21,6 +22,12 @@ export const createTask = async (req, res) => {
 // Update task
 export const updateTask = async (req, res) => {
   try {
+    // Find the task and check ownership
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ error: "Task not found" });
+    if (task.userId !== req.userId) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
     const updated = await Task.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
@@ -33,6 +40,12 @@ export const updateTask = async (req, res) => {
 // Delete task
 export const deleteTask = async (req, res) => {
   try {
+    // Find the task and check ownership
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ error: "Task not found" });
+    if (task.userId !== req.userId) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
     await Task.findByIdAndDelete(req.params.id);
     res.json({ message: "Task deleted" });
   } catch (err) {
