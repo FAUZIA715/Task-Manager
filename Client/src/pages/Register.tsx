@@ -4,7 +4,7 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-
+export const API_URL = import.meta.env.VITE_BASE_URL;
 interface RegisterForm {
   name: string;
   email: string;
@@ -25,7 +25,7 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8080/api/auth/register", form);
+      await axios.post(`${API_URL}/auth/register`, form);
       alert("Registration successful!");
       navigate("/login");
     } catch (err: any) {

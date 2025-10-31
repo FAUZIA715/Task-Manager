@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+export const API_URL = import.meta.env.VITE_BASE_URL;
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -21,10 +22,7 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:8080/api/auth/login",
-        form
-      );
+      const res = await axios.post(`${API_URL}/auth/login`, form);
       login(res.data.token, res.data.user);
       navigate("/dashboard");
     } catch (err: any) {
