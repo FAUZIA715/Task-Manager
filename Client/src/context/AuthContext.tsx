@@ -38,6 +38,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    // Prevent browser back navigation after logout by clearing history
+    window.history.replaceState(null, "", "/login");
+    // Push a new state to prevent going back
+    window.history.pushState(null, "", "/login");
   };
 
   return (
