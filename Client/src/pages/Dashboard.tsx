@@ -12,6 +12,19 @@ import { useAuth } from "../context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   fetchTasks,
   createTask,
   updateTask,
@@ -30,18 +43,64 @@ interface Task {
 const SortableItem = ({
   task,
   toggleTask,
+  updateTaskDetails,
   deleteTask,
+  setDeadlineDialog,
+  setSubtaskDialog,
+  isCompleted,
 }: {
   task: Task;
   toggleTask: (id: string) => void;
+  updateTaskDetails: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
+  setDeadlineDialog: React.Dispatch<
+    React.SetStateAction<{ open: boolean; taskId: string }>
+  >;
+  setSubtaskDialog: React.Dispatch<
+    React.SetStateAction<{ open: boolean; taskId: string }>
+  >;
+  isCompleted: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: task.id });
 
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editTitle, setEditTitle] = useState(task.title);
+  const [editDescription, setEditDescription] = useState(
+    task.description || ""
+  );
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+  };
+
+  const handleTitleSave = () => {
+    if (editTitle.trim() !== task.title) {
+      updateTaskDetails(task.id, { title: editTitle.trim() });
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleDescriptionSave = () => {
+    if (editDescription.trim() !== (task.description || "")) {
+      updateTaskDetails(task.id, {
+        description: editDescription.trim() || undefined,
+      });
+    }
+    setIsEditingDescription(false);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, save: () => void) => {
+    if (e.key === "Enter") {
+      save();
+    } else if (e.key === "Escape") {
+      setIsEditingTitle(false);
+      setIsEditingDescription(false);
+      setEditTitle(task.title);
+      setEditDescription(task.description || "");
+    }
   };
 
   return (
@@ -68,32 +127,97 @@ const SortableItem = ({
           className="w-5 h-5 cursor-pointer accent-green-600"
         />
         <div className="grow min-w-0">
-          <h3
-            className={`font-semibold ${
-              task.completed ? "line-through text-gray-500" : "text-gray-900"
-            }`}
-          >
-            {task.title}
-          </h3>
-          {task.description && (
-            <p className="text-sm text-gray-600">{task.description}</p>
+          {isEditingTitle ? (
+            <Input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={(e) => handleKeyPress(e, handleTitleSave)}
+              className="font-semibold text-gray-900 mb-1"
+              autoFocus
+            />
+          ) : (
+            <h3
+              className={`font-semibold cursor-pointer ${
+                task.completed ? "line-through text-gray-500" : "text-gray-900"
+              }`}
+              onClick={() => setIsEditingTitle(true)}
+            >
+              {task.title}
+            </h3>
+          )}
+          {isEditingDescription ? (
+            <Input
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              onBlur={handleDescriptionSave}
+              onKeyDown={(e) => handleKeyPress(e, handleDescriptionSave)}
+              className="text-sm text-gray-600"
+              placeholder="Add description..."
+              autoFocus
+            />
+          ) : (
+            <p
+              className="text-sm text-gray-600 cursor-pointer"
+              onClick={() => setIsEditingDescription(true)}
+            >
+              {task.description || "Add description..."}
+            </p>
           )}
           {task.dueDate && (
-            <p className="text-xs text-gray-500">
+            <p
+              className={`text-xs ${
+                new Date(task.dueDate) < new Date()
+                  ? "text-red-500 font-semibold"
+                  : "text-gray-500"
+              }`}
+            >
               Due: {new Date(task.dueDate).toLocaleDateString()}
+              {new Date(task.dueDate) < new Date()
+                ? ` (Overdue by ${Math.floor(
+                    (new Date().getTime() - new Date(task.dueDate).getTime()) /
+                      (1000 * 60 * 60 * 24)
+                  )} days)`
+                : ""}
             </p>
           )}
         </div>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={(e) => {
-            e.preventDefault();
-            deleteTask(task.id);
-          }}
-        >
-          Delete
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              ⋯
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {!isCompleted && (
+              <>
+                <DropdownMenuItem
+                  onClick={() =>
+                    setDeadlineDialog({ open: true, taskId: task.id })
+                  }
+                >
+                  Add deadline
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    setSubtaskDialog({ open: true, taskId: task.id })
+                  }
+                >
+                  Add subtask
+                </DropdownMenuItem>
+              </>
+            )}
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.preventDefault();
+                deleteTask(task.id);
+              }}
+              className="text-red-600"
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </Card>
   );
@@ -105,6 +229,19 @@ const Dashboard = () => {
   const [form, setForm] = useState({ title: "", description: "", dueDate: "" });
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [deadlineDialog, setDeadlineDialog] = useState({
+    open: false,
+    taskId: "",
+  });
+  const [subtaskDialog, setSubtaskDialog] = useState({
+    open: false,
+    taskId: "",
+  });
+  const [deadlineForm, setDeadlineForm] = useState({ dueDate: "" });
+  const [subtaskForm, setSubtaskForm] = useState({
+    title: "",
+    description: "",
+  });
 
   /* ✅ Fetch tasks */
   const loadTasks = async () => {
@@ -115,7 +252,9 @@ const Dashboard = () => {
         title: task.title || "No Title",
         description: task.description || "",
         completed: task.completed || false,
-        dueDate: task.dueDate || undefined,
+        dueDate: task.dueDate
+          ? new Date(task.dueDate).toISOString().split("T")[0]
+          : undefined,
       }));
       setTasks(mappedTasks);
     } catch (error) {
@@ -189,6 +328,18 @@ const Dashboard = () => {
     }
   };
 
+  /* ✅ Update Task */
+  const updateTaskDetails = async (id: string, updates: Partial<Task>) => {
+    try {
+      await updateTask(id, updates);
+      setTasks((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+      );
+    } catch (error) {
+      console.error("Failed to update task:", error);
+    }
+  };
+
   /* ✅ Delete Task */
   const deleteTask = async (id: string) => {
     try {
@@ -196,6 +347,45 @@ const Dashboard = () => {
       setTasks((prev) => prev.filter((t) => t.id !== id));
     } catch (error) {
       console.error("Failed to delete task:", error);
+    }
+  };
+
+  /* ✅ Add Deadline */
+  const addDeadline = async () => {
+    if (!deadlineForm.dueDate) return;
+    try {
+      const dueDateTimestamp = new Date(deadlineForm.dueDate).getTime();
+      await updateTask(deadlineDialog.taskId, {
+        dueDate: dueDateTimestamp,
+      } as any);
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === deadlineDialog.taskId
+            ? { ...t, dueDate: deadlineForm.dueDate }
+            : t
+        )
+      );
+      setDeadlineDialog({ open: false, taskId: "" });
+      setDeadlineForm({ dueDate: "" });
+    } catch (error) {
+      console.error("Failed to add deadline:", error);
+    }
+  };
+
+  /* ✅ Add Subtask */
+  const addSubtask = async () => {
+    if (!subtaskForm.title.trim()) return;
+    try {
+      const newSubtask = await createTask(subtaskForm as any);
+      // For now, just add as a regular task. In a full implementation, you'd handle subtasks differently.
+      setTasks((prev) => [
+        { id: newSubtask._id, ...subtaskForm, completed: false },
+        ...prev,
+      ]);
+      setSubtaskDialog({ open: false, taskId: "" });
+      setSubtaskForm({ title: "", description: "" });
+    } catch (error) {
+      console.error("Failed to add subtask:", error);
     }
   };
 
@@ -283,7 +473,11 @@ const Dashboard = () => {
                   key={task.id}
                   task={task}
                   toggleTask={toggleTask}
+                  updateTaskDetails={updateTaskDetails}
                   deleteTask={deleteTask}
+                  setDeadlineDialog={setDeadlineDialog}
+                  setSubtaskDialog={setSubtaskDialog}
+                  isCompleted={false}
                 />
               ))
             ) : (
@@ -328,7 +522,11 @@ const Dashboard = () => {
                       key={task.id}
                       task={task}
                       toggleTask={toggleTask}
+                      updateTaskDetails={updateTaskDetails}
                       deleteTask={deleteTask}
+                      setDeadlineDialog={setDeadlineDialog}
+                      setSubtaskDialog={setSubtaskDialog}
+                      isCompleted={true}
                     />
                   ))}
                 </div>
@@ -337,6 +535,76 @@ const Dashboard = () => {
           )}
         </div>
       )}
+
+      {/* Deadline Dialog */}
+      <Dialog
+        open={deadlineDialog.open}
+        onOpenChange={(open) =>
+          setDeadlineDialog({ open, taskId: deadlineDialog.taskId })
+        }
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Deadline</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="date"
+              value={deadlineForm.dueDate}
+              onChange={(e) => setDeadlineForm({ dueDate: e.target.value })}
+              placeholder="Select due date"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeadlineDialog({ open: false, taskId: "" })}
+            >
+              Cancel
+            </Button>
+            <Button onClick={addDeadline}>Add Deadline</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Subtask Dialog */}
+      <Dialog
+        open={subtaskDialog.open}
+        onOpenChange={(open) =>
+          setSubtaskDialog({ open, taskId: subtaskDialog.taskId })
+        }
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Subtask</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="Subtask title"
+              value={subtaskForm.title}
+              onChange={(e) =>
+                setSubtaskForm({ ...subtaskForm, title: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Subtask description (optional)"
+              value={subtaskForm.description}
+              onChange={(e) =>
+                setSubtaskForm({ ...subtaskForm, description: e.target.value })
+              }
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSubtaskDialog({ open: false, taskId: "" })}
+            >
+              Cancel
+            </Button>
+            <Button onClick={addSubtask}>Add Subtask</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
