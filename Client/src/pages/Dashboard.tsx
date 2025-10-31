@@ -91,7 +91,7 @@ const deleteTaskInHierarchy = (tasks: Task[], id: string): Task[] => {
     });
 };
 
-/* ✅ Draggable Subtask Component */
+/* Draggable Subtask Component */
 const SortableSubtask = ({
   subtask,
   toggleTask,
@@ -287,7 +287,7 @@ const SortableSubtask = ({
   );
 };
 
-/* ✅ Draggable Task Component */
+/* Draggable Task Component */
 const SortableItem = ({
   task,
   toggleTask,
@@ -575,7 +575,7 @@ const Dashboard = () => {
     dueDate: "",
   });
 
-  /* ✅ Fetch tasks */
+  /* Fetch tasks */
   const loadTasks = async (listName: string = currentList) => {
     try {
       let data;
@@ -627,11 +627,11 @@ const Dashboard = () => {
     if (user?.id) loadTasks(currentList);
   }, [user?.id, currentList]);
 
-  /* ✅ Input Handler */
+  /* Input Handler */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  /* ✅ Add Task */
+  /* Add Task */
   const addTask = async () => {
     if (!form.title.trim()) return;
     try {
@@ -653,7 +653,7 @@ const Dashboard = () => {
     }
   };
 
-  /* ✅ Toggle Complete / Active — instantly move between lists */
+  /*  Toggle Complete / Active — instantly move between lists */
   const toggleTask = async (id: string) => {
     const task = findTaskRecursively(tasks, id);
     if (!task) return;
@@ -671,7 +671,7 @@ const Dashboard = () => {
     }
   };
 
-  /* ✅ Toggle Star */
+  /* Toggle Star */
   const toggleStar = async (id: string) => {
     const task = findTaskRecursively(tasks, id);
     if (!task) return;
@@ -688,7 +688,7 @@ const Dashboard = () => {
     }
   };
 
-  /* ✅ Update Task */
+  /*  Update Task */
   const updateTaskDetails = async (id: string, updates: Partial<Task>) => {
     try {
       await updateTask(id, updates);
@@ -698,7 +698,7 @@ const Dashboard = () => {
     }
   };
 
-  /* ✅ Delete Task */
+  /* Delete Task */
   const deleteTask = async (id: string) => {
     try {
       await deleteTaskApi(id);
@@ -708,7 +708,7 @@ const Dashboard = () => {
     }
   };
 
-  /* ✅ Add Deadline */
+  /* Add Deadline */
   const addDeadline = async () => {
     if (!deadlineForm.dueDate) return;
     try {
@@ -726,7 +726,6 @@ const Dashboard = () => {
       setDeadlineDialog({ open: false, taskId: "" });
       setDeadlineForm({ dueDate: "" });
 
-      // Check if the task is a subtask and reload the page
       const task = findTaskRecursively(tasks, deadlineDialog.taskId);
       if (task && task.parentId) {
         window.location.reload();
@@ -736,7 +735,7 @@ const Dashboard = () => {
     }
   };
 
-  /* ✅ Add Subtask */
+  /* Add Subtask */
   const addSubtask = async () => {
     if (!subtaskForm.title.trim()) return;
     try {
@@ -781,7 +780,7 @@ const Dashboard = () => {
     }
   };
 
-  /* ✅ Create List */
+  /* Create List */
   const createList = () => {
     if (!newListName.trim() || lists.includes(newListName.trim())) return;
     const userLists = lists.filter((l) => l !== "Starred");
@@ -793,7 +792,7 @@ const Dashboard = () => {
     setListDialog({ open: false });
   };
 
-  /* ✅ Handle Drag End */
+  /* Handle Drag End */
   const handleDragEnd = async (event: any, isCompleted: boolean) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -824,7 +823,7 @@ const Dashboard = () => {
     });
   };
 
-  /* ✅ Handle Subtask Drag End */
+  /* Handle Subtask Drag End */
   const handleSubtaskDragEnd = async (event: any, parentId: string) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -859,7 +858,7 @@ const Dashboard = () => {
     });
   };
 
-  /* ✅ Split tasks */
+  /* Split tasks */
   const activeTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
 
@@ -870,7 +869,7 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6 border-b pb-4">
         <div>
-          <h2 className="text-2xl font-bold">Welcome, {user?.name} 👋</h2>
+          <h2 className="text-2xl font-bold">Welcome, {user?.name} </h2>
           <div className="flex items-center gap-2 mt-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -967,7 +966,7 @@ const Dashboard = () => {
               ))
             ) : (
               <p className="text-gray-500 text-center py-5 border rounded-lg bg-gray-50">
-                No active tasks 🎉
+                No active tasks
               </p>
             )}
           </div>
