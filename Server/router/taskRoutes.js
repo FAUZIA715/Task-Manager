@@ -4,9 +4,10 @@ import {
   createTask,
   updateTask,
   deleteTask,
-} from "../controllers/taskController.js";
+} from "../controller/taskController.js";
+import { verifyToken } from "../middleware/authmiddleware.js";
 const router = express.Router();
-
+router.use(verifyToken);
 router.get("/:userId", getTasks);
 router.post("/", createTask);
 router.put("/:id", updateTask);
