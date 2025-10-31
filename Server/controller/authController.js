@@ -4,7 +4,7 @@ import User from "../model/userModel.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// REGISTER new user
+// Register new user
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -25,7 +25,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// LOGIN user
+// Login user
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -43,6 +43,14 @@ export const loginUser = async (req, res) => {
       token,
       user: { id: user._id, name: user.name, email: user.email },
     });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const logoutUser = (req, res) => {
+  try {
+    res.json({ message: "User logged out successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
