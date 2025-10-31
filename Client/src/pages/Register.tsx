@@ -4,6 +4,7 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 export const API_URL = import.meta.env.VITE_BASE_URL;
 interface RegisterForm {
   name: string;
@@ -26,44 +27,48 @@ const Register = () => {
     e.preventDefault();
     try {
       await axios.post(`${API_URL}/auth/register`, form);
-      alert("Registration successful!");
+      toast.success("Registration successful!");
       navigate("/login");
     } catch (err: any) {
-      alert(err.response?.data?.message || "Error registering user");
+      toast.error(err.response?.data?.message || "Error registering user");
     }
   };
 
   return (
-    <Card className="max-w-md mx-auto mt-20">
-      <CardHeader>
-        <CardTitle>Register</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <Input
-            placeholder="Name"
-            name="name"
-            onChange={handleChange}
-            required
-          />
-          <Input
-            placeholder="Email"
-            name="email"
-            type="email"
-            onChange={handleChange}
-            required
-          />
-          <Input
-            placeholder="Password"
-            name="password"
-            type="password"
-            onChange={handleChange}
-            required
-          />
-          <Button type="submit">Register</Button>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <Card className="w-[400px] p-5 ">
+        <CardHeader>
+          <CardTitle className="text-center font-extrabold text-2xl">
+            Register
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <Input
+              placeholder="Name"
+              name="name"
+              onChange={handleChange}
+              required
+            />
+            <Input
+              placeholder="Email"
+              name="email"
+              type="email"
+              onChange={handleChange}
+              required
+            />
+            <Input
+              placeholder="Password"
+              name="password"
+              type="password"
+              onChange={handleChange}
+              required
+            />
+            <Button type="submit">Register</Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

@@ -865,9 +865,9 @@ const Dashboard = () => {
   if (loading) return <div className="p-6 text-center">Loading tasks...</div>;
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
+    <div className="p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6 border-b pb-4">
+      <div className="flex justify-between items-center mb-6 border-b pb-4 w-full">
         <div>
           <h2 className="text-2xl font-bold">Welcome, {user?.name} </h2>
           <div className="flex items-center gap-2 mt-2">
@@ -901,232 +901,238 @@ const Dashboard = () => {
           Logout
         </Button>
       </div>
+      <div className=" max-w-2xl mx-auto mb-8">
+        {/* Add Task */}
+        {currentList !== "Starred" && (
+          <Card className="p-4 mb-6 shadow-lg">
+            <CardHeader className="p-0 mb-3">
+              <CardTitle className="text-xl">Add New Task</CardTitle>
+            </CardHeader>
+            <CardContent className="flex gap-2 p-0 flex-wrap">
+              <Input
+                name="title"
+                placeholder="Title"
+                value={form.title}
+                onChange={handleChange}
+                className="grow"
+              />
+              <Input
+                name="description"
+                placeholder="Description"
+                value={form.description}
+                onChange={handleChange}
+                className="grow"
+              />
+              <Input
+                name="dueDate"
+                type="date"
+                value={form.dueDate}
+                onChange={handleChange}
+                className="grow"
+              />
+              <Button onClick={addTask}>Add</Button>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Add Task */}
-      {currentList !== "Starred" && (
-        <Card className="p-4 mb-6 shadow-lg">
-          <CardHeader className="p-0 mb-3">
-            <CardTitle className="text-xl">Add New Task</CardTitle>
-          </CardHeader>
-          <CardContent className="flex gap-2 p-0 flex-wrap">
-            <Input
-              name="title"
-              placeholder="Title"
-              value={form.title}
-              onChange={handleChange}
-              className="grow"
-            />
-            <Input
-              name="description"
-              placeholder="Description"
-              value={form.description}
-              onChange={handleChange}
-              className="grow"
-            />
-            <Input
-              name="dueDate"
-              type="date"
-              value={form.dueDate}
-              onChange={handleChange}
-              className="grow"
-            />
-            <Button onClick={addTask}>Add</Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* === ACTIVE TASKS === */}
-      <h3 className="text-xl font-semibold mb-3">
-        {currentList === "Starred" ? "Starred Tasks" : "Active Tasks"} (
-        {activeTasks.length})
-      </h3>
-      <DndContext
-        collisionDetection={closestCenter}
-        onDragEnd={(e) => handleDragEnd(e, false)}
-      >
-        <SortableContext
-          items={activeTasks.map((t) => t.id)}
-          strategy={verticalListSortingStrategy}
+        {/* === ACTIVE TASKS === */}
+        <h3 className="text-xl font-semibold mb-3">
+          {currentList === "Starred" ? "Starred Tasks" : "Active Tasks"} (
+          {activeTasks.length})
+        </h3>
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={(e) => handleDragEnd(e, false)}
         >
-          <div className="space-y-3">
-            {activeTasks.length > 0 ? (
-              activeTasks.map((task) => (
-                <SortableItem
-                  key={task.id}
-                  task={task}
-                  toggleTask={toggleTask}
-                  toggleStar={toggleStar}
-                  updateTaskDetails={updateTaskDetails}
-                  deleteTask={deleteTask}
-                  setDeadlineDialog={setDeadlineDialog}
-                  setSubtaskDialog={setSubtaskDialog}
-                  handleSubtaskDragEnd={handleSubtaskDragEnd}
-                  isCompleted={false}
-                />
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-5 border rounded-lg bg-gray-50">
-                No active tasks
-              </p>
+          <SortableContext
+            items={activeTasks.map((t) => t.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {activeTasks.length > 0 ? (
+                activeTasks.map((task) => (
+                  <SortableItem
+                    key={task.id}
+                    task={task}
+                    toggleTask={toggleTask}
+                    toggleStar={toggleStar}
+                    updateTaskDetails={updateTaskDetails}
+                    deleteTask={deleteTask}
+                    setDeadlineDialog={setDeadlineDialog}
+                    setSubtaskDialog={setSubtaskDialog}
+                    handleSubtaskDragEnd={handleSubtaskDragEnd}
+                    isCompleted={false}
+                  />
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-5 border rounded-lg bg-gray-50">
+                  No active tasks
+                </p>
+              )}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        {/* === COMPLETED TASKS === */}
+        {completedTasks.length > 0 && currentList !== "Starred" && (
+          <div className="mt-8">
+            <button
+              onClick={() => setShowCompleted(!showCompleted)}
+              className="flex justify-between items-center w-full bg-gray-100 hover:bg-gray-200 transition px-4 py-3 rounded-lg text-left border"
+            >
+              <span className="font-medium text-lg text-gray-700">
+                {showCompleted
+                  ? "Hide Completed Tasks"
+                  : "Show Completed Tasks"}{" "}
+                <span className="font-normal text-sm text-gray-500">
+                  ({completedTasks.length})
+                </span>
+              </span>
+              <span className="text-gray-500 text-xl">
+                {showCompleted ? "▲" : "▼"}
+              </span>
+            </button>
+
+            {showCompleted && (
+              <DndContext
+                collisionDetection={closestCenter}
+                onDragEnd={(e) => handleDragEnd(e, true)}
+              >
+                <SortableContext
+                  items={completedTasks.map((t) => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3 mt-4">
+                    {completedTasks.map((task) => (
+                      <SortableItem
+                        key={task.id}
+                        task={task}
+                        toggleTask={toggleTask}
+                        toggleStar={toggleStar}
+                        updateTaskDetails={updateTaskDetails}
+                        deleteTask={deleteTask}
+                        setDeadlineDialog={setDeadlineDialog}
+                        setSubtaskDialog={setSubtaskDialog}
+                        handleSubtaskDragEnd={handleSubtaskDragEnd}
+                        isCompleted={true}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
-        </SortableContext>
-      </DndContext>
+        )}
 
-      {/* === COMPLETED TASKS === */}
-      {completedTasks.length > 0 && currentList !== "Starred" && (
-        <div className="mt-8">
-          <button
-            onClick={() => setShowCompleted(!showCompleted)}
-            className="flex justify-between items-center w-full bg-gray-100 hover:bg-gray-200 transition px-4 py-3 rounded-lg text-left border"
-          >
-            <span className="font-medium text-lg text-gray-700">
-              {showCompleted ? "Hide Completed Tasks" : "Show Completed Tasks"}{" "}
-              <span className="font-normal text-sm text-gray-500">
-                ({completedTasks.length})
-              </span>
-            </span>
-            <span className="text-gray-500 text-xl">
-              {showCompleted ? "▲" : "▼"}
-            </span>
-          </button>
-
-          {showCompleted && (
-            <DndContext
-              collisionDetection={closestCenter}
-              onDragEnd={(e) => handleDragEnd(e, true)}
-            >
-              <SortableContext
-                items={completedTasks.map((t) => t.id)}
-                strategy={verticalListSortingStrategy}
+        {/* Deadline Dialog */}
+        <Dialog
+          open={deadlineDialog.open}
+          onOpenChange={(open) =>
+            setDeadlineDialog({ open, taskId: deadlineDialog.taskId })
+          }
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Deadline</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                type="date"
+                value={deadlineForm.dueDate}
+                onChange={(e) => setDeadlineForm({ dueDate: e.target.value })}
+                placeholder="Select due date"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDeadlineDialog({ open: false, taskId: "" })}
               >
-                <div className="space-y-3 mt-4">
-                  {completedTasks.map((task) => (
-                    <SortableItem
-                      key={task.id}
-                      task={task}
-                      toggleTask={toggleTask}
-                      toggleStar={toggleStar}
-                      updateTaskDetails={updateTaskDetails}
-                      deleteTask={deleteTask}
-                      setDeadlineDialog={setDeadlineDialog}
-                      setSubtaskDialog={setSubtaskDialog}
-                      handleSubtaskDragEnd={handleSubtaskDragEnd}
-                      isCompleted={true}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
-        </div>
-      )}
+                Cancel
+              </Button>
+              <Button onClick={addDeadline}>Add Deadline</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Deadline Dialog */}
-      <Dialog
-        open={deadlineDialog.open}
-        onOpenChange={(open) =>
-          setDeadlineDialog({ open, taskId: deadlineDialog.taskId })
-        }
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Deadline</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              type="date"
-              value={deadlineForm.dueDate}
-              onChange={(e) => setDeadlineForm({ dueDate: e.target.value })}
-              placeholder="Select due date"
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeadlineDialog({ open: false, taskId: "" })}
-            >
-              Cancel
-            </Button>
-            <Button onClick={addDeadline}>Add Deadline</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Subtask Dialog */}
+        <Dialog
+          open={subtaskDialog.open}
+          onOpenChange={(open) =>
+            setSubtaskDialog({ open, taskId: subtaskDialog.taskId })
+          }
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Subtask</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="Subtask title"
+                value={subtaskForm.title}
+                onChange={(e) =>
+                  setSubtaskForm({ ...subtaskForm, title: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Subtask description (optional)"
+                value={subtaskForm.description}
+                onChange={(e) =>
+                  setSubtaskForm({
+                    ...subtaskForm,
+                    description: e.target.value,
+                  })
+                }
+              />
+              <Input
+                type="date"
+                placeholder="Due date (optional)"
+                value={subtaskForm.dueDate}
+                onChange={(e) =>
+                  setSubtaskForm({ ...subtaskForm, dueDate: e.target.value })
+                }
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setSubtaskDialog({ open: false, taskId: "" })}
+              >
+                Cancel
+              </Button>
+              <Button onClick={addSubtask}>Add Subtask</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Subtask Dialog */}
-      <Dialog
-        open={subtaskDialog.open}
-        onOpenChange={(open) =>
-          setSubtaskDialog({ open, taskId: subtaskDialog.taskId })
-        }
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Subtask</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="Subtask title"
-              value={subtaskForm.title}
-              onChange={(e) =>
-                setSubtaskForm({ ...subtaskForm, title: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Subtask description (optional)"
-              value={subtaskForm.description}
-              onChange={(e) =>
-                setSubtaskForm({ ...subtaskForm, description: e.target.value })
-              }
-            />
-            <Input
-              type="date"
-              placeholder="Due date (optional)"
-              value={subtaskForm.dueDate}
-              onChange={(e) =>
-                setSubtaskForm({ ...subtaskForm, dueDate: e.target.value })
-              }
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setSubtaskDialog({ open: false, taskId: "" })}
-            >
-              Cancel
-            </Button>
-            <Button onClick={addSubtask}>Add Subtask</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* List Dialog */}
-      <Dialog
-        open={listDialog.open}
-        onOpenChange={(open) => setListDialog({ open })}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New List</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              placeholder="List name"
-              value={newListName}
-              onChange={(e) => setNewListName(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setListDialog({ open: false })}
-            >
-              Cancel
-            </Button>
-            <Button onClick={createList}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* List Dialog */}
+        <Dialog
+          open={listDialog.open}
+          onOpenChange={(open) => setListDialog({ open })}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New List</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="List name"
+                value={newListName}
+                onChange={(e) => setNewListName(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setListDialog({ open: false })}
+              >
+                Cancel
+              </Button>
+              <Button onClick={createList}>Create</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };

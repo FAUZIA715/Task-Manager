@@ -9,6 +9,7 @@ import { useAuth, AuthProvider } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import { Toaster } from "sonner";
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
@@ -31,6 +32,7 @@ const App = () => (
         />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
+      <Toaster />
     </Router>
   </AuthProvider>
 );

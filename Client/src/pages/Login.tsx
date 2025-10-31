@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 interface LoginForm {
   email: string;
   password: string;
@@ -26,35 +27,45 @@ const Login = () => {
       login(res.data.token, res.data.user);
       navigate("/dashboard");
     } catch (err: any) {
-      alert(err.response?.data?.message || "Login failed");
+      toast.error(err.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <Card className="max-w-md mx-auto mt-20">
-      <CardHeader>
-        <CardTitle>Login</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <Input
-            placeholder="Email"
-            name="email"
-            type="email"
-            onChange={handleChange}
-            required
-          />
-          <Input
-            placeholder="Password"
-            name="password"
-            type="password"
-            onChange={handleChange}
-            required
-          />
-          <Button type="submit">Login</Button>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <Card className="w-[400px] p-5 ">
+        <CardHeader>
+          <CardTitle className="text-center font-extrabold text-2xl">
+            Login
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <Input
+              placeholder="Email"
+              name="email"
+              type="email"
+              onChange={handleChange}
+              required
+            />
+            <Input
+              placeholder="Password"
+              name="password"
+              type="password"
+              onChange={handleChange}
+              required
+            />
+            <Button type="submit">Login</Button>
+            <div className="text-center text-gray-600">
+              Don't have an account?{" "}
+              <a href="/register" className="underline">
+                Register
+              </a>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
