@@ -1,8 +1,9 @@
-const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const connectDB = require("./config/db");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import connectDB from "./config/db.js";
 import taskRoutes from "./router/taskRoutes.js";
+import authRoutes from "./router/authRoutes.js";
 // Load env
 dotenv.config();
 
@@ -16,6 +17,8 @@ app.use(express.json());
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK", message: "Server is healthy" });
 });
+// Auth routes
+app.use("/api/auth", authRoutes);
 // Task route
 app.use("/api/tasks", taskRoutes);
 const PORT = process.env.PORT;

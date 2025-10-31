@@ -2,28 +2,20 @@ import Task from "../model/taskModel.js";
 
 // Get all tasks for a user
 export const getTasks = async (req, res) => {
-  try {
-    const tasks = await Task.find({ userId: req.params.userId });
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const tasks = await Task.find({ userId: req.userId });
+  res.json(tasks);
 };
 
 // Create new task
 export const createTask = async (req, res) => {
-  try {
-    const { userId, title, description } = req.body;
-    const task = await Task.create({
-      userId,
-      title,
-      description,
-      completed: false,
-    });
-    res.status(201).json(task);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const { title, description } = req.body;
+  const task = await Task.create({
+    userId: req.userId,
+    title,
+    description,
+    completed: false,
+  });
+  res.status(201).json(task);
 };
 
 // Update task
