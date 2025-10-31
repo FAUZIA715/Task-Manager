@@ -216,7 +216,7 @@ const SortableSubtask = ({
                 new Date(subtask.dueDate) < new Date()
                   ? "text-red-500 font-semibold"
                   : "text-gray-500"
-              }`}
+              } flex items-center gap-1`}
             >
               Due: {new Date(subtask.dueDate).toLocaleDateString()}
               {new Date(subtask.dueDate) < new Date()
@@ -226,6 +226,17 @@ const SortableSubtask = ({
                       (1000 * 60 * 60 * 24)
                   )} days)`
                 : ""}
+              {!isCompleted && (
+                <span
+                  className="cursor-pointer text-red-500 hover:text-red-700 ml-1"
+                  onClick={() =>
+                    updateTaskDetails(subtask.id, { dueDate: undefined })
+                  }
+                  title="Remove deadline"
+                >
+                  ×
+                </span>
+              )}
             </p>
           )}
         </div>
@@ -398,7 +409,7 @@ const SortableItem = ({
                   new Date(task.dueDate) < new Date()
                     ? "text-red-500 font-semibold"
                     : "text-gray-500"
-                }`}
+                } flex items-center gap-1`}
               >
                 Due: {new Date(task.dueDate).toLocaleDateString()}
                 {new Date(task.dueDate) < new Date()
@@ -408,6 +419,17 @@ const SortableItem = ({
                         (1000 * 60 * 60 * 24)
                     )} days)`
                   : ""}
+                {!isCompleted && (
+                  <span
+                    className="cursor-pointer text-red-500 hover:text-red-700 ml-1"
+                    onClick={() =>
+                      updateTaskDetails(task.id, { dueDate: undefined })
+                    }
+                    title="Remove deadline"
+                  >
+                    ×
+                  </span>
+                )}
               </p>
             )}
             {task.subtasks && task.subtasks.length > 0 && (
@@ -607,9 +629,7 @@ const Dashboard = () => {
   const updateTaskDetails = async (id: string, updates: Partial<Task>) => {
     try {
       await updateTask(id, updates);
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
-      );
+      setTasks((prev) => updateTaskInHierarchy(prev, id, updates));
     } catch (error) {
       console.error("Failed to update task:", error);
     }
