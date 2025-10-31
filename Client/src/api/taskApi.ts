@@ -2,11 +2,14 @@ export const API_URL = "http://localhost:8080/api";
 
 export const getToken = () => localStorage.getItem("token");
 
-export const fetchTasks = async () => {
+export const fetchTasks = async (listName: string = "My Task List") => {
   const token = getToken();
-  const res = await fetch(`${API_URL}/tasks`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await fetch(
+    `${API_URL}/tasks?listName=${encodeURIComponent(listName)}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
   if (!res.ok) throw new Error("Failed to fetch tasks");
   return res.json();
 };
@@ -14,6 +17,7 @@ export const fetchTasks = async () => {
 export const createTask = async (taskData: {
   title: string;
   description: string;
+  listName?: string;
 }) => {
   const token = getToken();
   const res = await fetch(`${API_URL}/tasks`, {

@@ -1,20 +1,22 @@
 import Task from "../model/taskModel.js";
 
-// Get all tasks for a user
+// Get all tasks for a user, optionally filtered by listName
 export const getTasks = async (req, res) => {
-  const tasks = await Task.find({ userId: req.userId });
+  const { listName = "My Task List" } = req.query;
+  const tasks = await Task.find({ userId: req.userId, listName });
   res.json(tasks);
 };
 
 // Create new task
 export const createTask = async (req, res) => {
-  const { title, description, dueDate } = req.body;
+  const { title, description, dueDate, listName = "My Task List" } = req.body;
   const task = await Task.create({
     userId: req.userId,
     title,
     description,
     completed: false,
     dueDate,
+    listName,
   });
   res.status(201).json(task);
 };

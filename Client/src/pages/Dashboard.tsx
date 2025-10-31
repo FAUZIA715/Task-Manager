@@ -37,6 +37,7 @@ interface Task {
   description: string;
   completed: boolean;
   dueDate?: string;
+  listName?: string;
 }
 
 /* ✅ Draggable Task Component */
@@ -226,6 +227,15 @@ const SortableItem = ({
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [currentList, setCurrentList] = useState("My Task List");
+  const [lists, setLists] = useState<string[]>(["My Task List"]);
+
+  useEffect(() => {
+    if (user?.id) {
+      const savedLists = localStorage.getItem(`taskLists_${user.id}`);
+      setLists(savedLists ? JSON.parse(savedLists) : ["My Task List"]);
+    }
+  }, [user?.id]);
   const [form, setForm] = useState({ title: "", description: "", dueDate: "" });
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
@@ -237,6 +247,8 @@ const Dashboard = () => {
     open: false,
     taskId: "",
   });
+  const [listDialog, setListDialog] = useState({ open: false });
+  const [newListName, setNewListName] = useState("");
   const [deadlineForm, setDeadlineForm] = useState({ dueDate: "" });
   const [subtaskForm, setSubtaskForm] = useState({
     title: "",
@@ -244,9 +256,9 @@ const Dashboard = () => {
   });
 
   /* ✅ Fetch tasks */
-  const loadTasks = async () => {
+  const loadTasks = async (listName: string = currentList) => {
     try {
-      const data = await fetchTasks();
+      const data = await fetchTasks(listName);
       const mappedTasks = data.map((task: any) => ({
         id: task._id,
         title: task.title || "No Title",
@@ -255,6 +267,7 @@ const Dashboard = () => {
         dueDate: task.dueDate
           ? new Date(task.dueDate).toISOString().split("T")[0]
           : undefined,
+        listName: task.listName || "My Task List",
       }));
       setTasks(mappedTasks);
     } catch (error) {
@@ -265,8 +278,8 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (user?.id) loadTasks();
-  }, [user?.id]);
+    if (user?.id) loadTasks(currentList);
+  }, [user?.id, currentList]);
 
   /* ✅ Input Handler */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -276,9 +289,9 @@ const Dashboard = () => {
   const addTask = async () => {
     if (!form.title.trim()) return;
     try {
-      const newTask = await createTask(form);
+      const newTask = await createTask({ ...form, listName: currentList });
       setTasks((prev) => [
-        { id: newTask._id, ...form, completed: false },
+        { id: newTask._id, ...form, completed: false, listName: currentList },
         ...prev,
       ]);
       setForm({ title: "", description: "", dueDate: "" });
@@ -389,6 +402,17 @@ const Dashboard = () => {
     }
   };
 
+  /* ✅ Create List */
+  const createList = () => {
+    if (!newListName.trim() || lists.includes(newListName.trim())) return;
+    const newLists = [...lists, newListName.trim()];
+    setLists(newLists);
+    localStorage.setItem(`taskLists_${user?.id}`, JSON.stringify(newLists));
+    setCurrentList(newListName.trim());
+    setNewListName("");
+    setListDialog({ open: false });
+  };
+
   /* ✅ Handle Drag End */
   const handleDragEnd = (event: any, isCompleted: boolean) => {
     const { active, over } = event;
@@ -417,7 +441,35 @@ const Dashboard = () => {
     <div className="p-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-6 border-b pb-4">
-        <h2 className="text-2xl font-bold">Welcome, {user?.name} 👋</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Welcome, {user?.name} 👋</h2>
+          <div className="flex items-center gap-2 mt-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  {currentList} ▼
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {lists.map((list) => (
+                  <DropdownMenuItem
+                    key={list}
+                    onClick={() => setCurrentList(list)}
+                  >
+                    {list}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setListDialog({ open: true })}
+            >
+              + New List
+            </Button>
+          </div>
+        </div>
         <Button onClick={logout} variant="secondary">
           Logout
         </Button>
@@ -602,6 +654,34 @@ const Dashboard = () => {
               Cancel
             </Button>
             <Button onClick={addSubtask}>Add Subtask</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* List Dialog */}
+      <Dialog
+        open={listDialog.open}
+        onOpenChange={(open) => setListDialog({ open })}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New List</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              placeholder="List name"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setListDialog({ open: false })}
+            >
+              Cancel
+            </Button>
+            <Button onClick={createList}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
