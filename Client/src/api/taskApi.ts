@@ -18,6 +18,7 @@ export const createTask = async (taskData: {
   title: string;
   description: string;
   listName?: string;
+  parentId?: string;
 }) => {
   const token = getToken();
   const res = await fetch(`${API_URL}/tasks`, {
@@ -34,7 +35,12 @@ export const createTask = async (taskData: {
 
 export const updateTask = async (
   id: string,
-  updates: Partial<{ title: string; description: string; completed: boolean }>
+  updates: Partial<{
+    title: string;
+    description: string;
+    completed: boolean;
+    order: number;
+  }>
 ) => {
   const token = getToken();
   const res = await fetch(`${API_URL}/tasks/${id}`, {
