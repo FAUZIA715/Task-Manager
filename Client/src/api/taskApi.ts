@@ -95,3 +95,19 @@ export const changePassword = async (
   }
   return res.json();
 };
+// Delete Tasks by List API Call
+export const deleteTasksByList = async (listName: string) => {
+  const token = getToken();
+  const res = await fetch(
+    `${API_URL}/tasks/list/${encodeURIComponent(listName)}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to delete list");
+  }
+  return res.json();
+};

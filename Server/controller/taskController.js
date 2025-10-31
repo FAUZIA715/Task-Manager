@@ -149,3 +149,18 @@ export const deleteTask = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Delete all tasks in a list for the user, but prevent deleting "My Task List"
+export const deleteTasksByList = async (req, res) => {
+  try {
+    const { listName } = req.params;
+    if (listName === "My Task List") {
+      return res.status(400).json({ error: "Cannot delete the default list" });
+    }
+    // Delete all tasks in the list for the user
+    await Task.deleteMany({ userId: req.userId, listName });
+    res.json({ message: `All tasks in list "${listName}" deleted` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

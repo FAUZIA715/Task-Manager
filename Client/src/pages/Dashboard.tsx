@@ -34,6 +34,7 @@ import {
   updateTask,
   deleteTaskApi,
   changePassword,
+  deleteTasksByList,
 } from "../api/taskApi";
 
 interface Task {
@@ -805,6 +806,23 @@ const Dashboard = () => {
     setListDialog({ open: false });
   };
 
+  /* Delete List */
+  const deleteList = async (listName: string) => {
+    try {
+      await deleteTasksByList(listName);
+      const userLists = lists.filter((l) => l !== "Starred" && l !== listName);
+      setLists(["Starred", ...userLists]);
+      localStorage.setItem(`taskLists_${user?.id}`, JSON.stringify(userLists));
+      if (currentList === listName) {
+        setCurrentList("My Task List");
+      }
+      toast.success(`List "${listName}" deleted successfully`);
+    } catch (error) {
+      console.error("Failed to delete list:", error);
+      toast.error("Failed to delete list");
+    }
+  };
+
   /* Change Password */
   const handleChangePassword = async () => {
     if (
@@ -923,12 +941,31 @@ const Dashboard = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
                 {lists.map((list) => (
-                  <DropdownMenuItem
+                  <div
                     key={list}
-                    onClick={() => setCurrentList(list)}
+                    className="flex items-center justify-between w-full"
                   >
-                    {list}
-                  </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setCurrentList(list)}
+                      className="flex-1"
+                    >
+                      {list}
+                    </DropdownMenuItem>
+                    {list !== "My Task List" && list !== "Starred" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteList(list);
+                        }}
+                        className="ml-2 text-red-600 hover:text-red-800"
+                        title={`Delete ${list}`}
+                      >
+                        🗑️
+                      </Button>
+                    )}
+                  </div>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
