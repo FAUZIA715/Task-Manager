@@ -9,6 +9,14 @@ export const getTasks = async (req, res) => {
   res.json(tasks);
 };
 
+// Get starred tasks for a user
+export const getStarredTasks = async (req, res) => {
+  const tasks = await Task.find({ userId: req.userId, starred: true }).sort({
+    order: 1,
+  });
+  res.json(tasks);
+};
+
 // Create new task
 export const createTask = async (req, res) => {
   const {

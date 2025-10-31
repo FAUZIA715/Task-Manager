@@ -24,8 +24,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Star } from "lucide-react";
 import {
   fetchTasks,
+  fetchStarredTasks,
   createTask,
   updateTask,
   deleteTaskApi,
@@ -36,11 +39,12 @@ interface Task {
   title: string;
   description: string;
   completed: boolean;
-  dueDate?: string;
+  dueDate?: number;
   listName?: string;
   parentId?: string;
   subtasks?: Task[];
   order?: number;
+  starred?: boolean;
 }
 
 /* Helper function to find a task recursively in the hierarchy */
@@ -91,6 +95,7 @@ const deleteTaskInHierarchy = (tasks: Task[], id: string): Task[] => {
 const SortableSubtask = ({
   subtask,
   toggleTask,
+  toggleStar,
   updateTaskDetails,
   deleteTask,
   setDeadlineDialog,
@@ -98,6 +103,7 @@ const SortableSubtask = ({
 }: {
   subtask: Task;
   toggleTask: (id: string) => void;
+  toggleStar: (id: string) => void;
   updateTaskDetails: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   setDeadlineDialog: React.Dispatch<
@@ -170,6 +176,7 @@ const SortableSubtask = ({
           onChange={() => toggleTask(subtask.id)}
           className="w-4 h-4 cursor-pointer accent-green-600"
         />
+
         <div className="grow min-w-0">
           {isEditingTitle ? (
             <Input
@@ -267,6 +274,14 @@ const SortableSubtask = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <Star
+          className={`w-4 h-4 cursor-pointer ${
+            subtask.starred
+              ? "fill-yellow-400 text-yellow-400"
+              : "text-gray-400"
+          }`}
+          onClick={() => toggleStar(subtask.id)}
+        />
       </div>
     </Card>
   );
@@ -276,6 +291,7 @@ const SortableSubtask = ({
 const SortableItem = ({
   task,
   toggleTask,
+  toggleStar,
   updateTaskDetails,
   deleteTask,
   setDeadlineDialog,
@@ -285,6 +301,7 @@ const SortableItem = ({
 }: {
   task: Task;
   toggleTask: (id: string) => void;
+  toggleStar: (id: string) => void;
   updateTaskDetails: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   setDeadlineDialog: React.Dispatch<
@@ -363,6 +380,7 @@ const SortableItem = ({
             onChange={() => toggleTask(task.id)}
             className="w-5 h-5 cursor-pointer accent-green-600"
           />
+
           <div className="grow min-w-0">
             {isEditingTitle ? (
               <Input
@@ -441,6 +459,7 @@ const SortableItem = ({
               </button>
             )}
           </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
@@ -477,6 +496,16 @@ const SortableItem = ({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          {!isCompleted && (
+            <Star
+              className={`w-5 h-5 cursor-pointer ${
+                task.starred
+                  ? "fill-yellow-400 text-yellow-400"
+                  : "text-gray-400"
+              }`}
+              onClick={() => toggleStar(task.id)}
+            />
+          )}
         </div>
       </Card>
       {showSubtasks && task.subtasks && task.subtasks.length > 0 && (
@@ -494,6 +523,7 @@ const SortableItem = ({
                   key={subtask.id}
                   subtask={subtask}
                   toggleTask={toggleTask}
+                  toggleStar={toggleStar}
                   updateTaskDetails={updateTaskDetails}
                   deleteTask={deleteTask}
                   setDeadlineDialog={setDeadlineDialog}
@@ -512,12 +542,17 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentList, setCurrentList] = useState("My Task List");
+  const [lastList, setLastList] = useState("My Task List");
   const [lists, setLists] = useState<string[]>(["My Task List"]);
+  const [currentView, setCurrentView] = useState<
+    "active" | "completed" | "starred"
+  >("active");
 
   useEffect(() => {
     if (user?.id) {
       const savedLists = localStorage.getItem(`taskLists_${user.id}`);
-      setLists(savedLists ? JSON.parse(savedLists) : ["My Task List"]);
+      const userLists = savedLists ? JSON.parse(savedLists) : ["My Task List"];
+      setLists(["Starred", ...userLists]);
     }
   }, [user?.id]);
   const [form, setForm] = useState({ title: "", description: "", dueDate: "" });
@@ -543,17 +578,21 @@ const Dashboard = () => {
   /* ✅ Fetch tasks */
   const loadTasks = async (listName: string = currentList) => {
     try {
-      const data = await fetchTasks(listName);
+      let data;
+      if (listName === "Starred") {
+        data = await fetchStarredTasks();
+      } else {
+        data = await fetchTasks(listName);
+      }
       const mappedTasks = data.map((task: any) => ({
         id: task._id,
         title: task.title || "No Title",
         description: task.description || "",
         completed: task.completed || false,
-        dueDate: task.dueDate
-          ? new Date(task.dueDate).toISOString().split("T")[0]
-          : undefined,
+        dueDate: task.dueDate ? new Date(task.dueDate).getTime() : undefined,
         listName: task.listName || "My Task List",
         parentId: task.parentId || undefined,
+        starred: task.starred || false,
       }));
 
       // Build hierarchical structure
@@ -598,7 +637,14 @@ const Dashboard = () => {
     try {
       const newTask = await createTask({ ...form, listName: currentList });
       setTasks((prev) => [
-        { id: newTask._id, ...form, completed: false, listName: currentList },
+        {
+          id: newTask._id,
+          title: form.title,
+          description: form.description,
+          completed: false,
+          dueDate: form.dueDate ? new Date(form.dueDate).getTime() : undefined,
+          listName: currentList,
+        },
         ...prev,
       ]);
       setForm({ title: "", description: "", dueDate: "" });
@@ -622,6 +668,23 @@ const Dashboard = () => {
       await loadTasks(currentList);
     } catch (error) {
       console.error("Failed to toggle task:", error);
+    }
+  };
+
+  /* ✅ Toggle Star */
+  const toggleStar = async (id: string) => {
+    const task = findTaskRecursively(tasks, id);
+    if (!task) return;
+
+    const newStarred = !task.starred;
+
+    try {
+      await updateTask(id, { starred: newStarred });
+      setTasks((prev) =>
+        updateTaskInHierarchy(prev, id, { starred: newStarred })
+      );
+    } catch (error) {
+      console.error("Failed to toggle star:", error);
     }
   };
 
@@ -656,7 +719,7 @@ const Dashboard = () => {
       setTasks((prev) =>
         prev.map((t) =>
           t.id === deadlineDialog.taskId
-            ? { ...t, dueDate: deadlineForm.dueDate }
+            ? { ...t, dueDate: dueDateTimestamp }
             : t
         )
       );
@@ -696,8 +759,12 @@ const Dashboard = () => {
                 ...(task.subtasks || []),
                 {
                   id: newSubtask._id,
-                  ...subtaskForm,
+                  title: subtaskForm.title,
+                  description: subtaskForm.description,
                   completed: false,
+                  dueDate: subtaskForm.dueDate
+                    ? new Date(subtaskForm.dueDate).getTime()
+                    : undefined,
                   parentId: subtaskDialog.taskId,
                 },
               ],
@@ -717,8 +784,9 @@ const Dashboard = () => {
   /* ✅ Create List */
   const createList = () => {
     if (!newListName.trim() || lists.includes(newListName.trim())) return;
-    const newLists = [...lists, newListName.trim()];
-    setLists(newLists);
+    const userLists = lists.filter((l) => l !== "Starred");
+    const newLists = [...userLists, newListName.trim()];
+    setLists(["Starred", ...newLists]);
     localStorage.setItem(`taskLists_${user?.id}`, JSON.stringify(newLists));
     setCurrentList(newListName.trim());
     setNewListName("");
@@ -836,39 +904,42 @@ const Dashboard = () => {
       </div>
 
       {/* Add Task */}
-      <Card className="p-4 mb-6 shadow-lg">
-        <CardHeader className="p-0 mb-3">
-          <CardTitle className="text-xl">Add New Task</CardTitle>
-        </CardHeader>
-        <CardContent className="flex gap-2 p-0 flex-wrap">
-          <Input
-            name="title"
-            placeholder="Title"
-            value={form.title}
-            onChange={handleChange}
-            className="grow"
-          />
-          <Input
-            name="description"
-            placeholder="Description"
-            value={form.description}
-            onChange={handleChange}
-            className="grow"
-          />
-          <Input
-            name="dueDate"
-            type="date"
-            value={form.dueDate}
-            onChange={handleChange}
-            className="grow"
-          />
-          <Button onClick={addTask}>Add</Button>
-        </CardContent>
-      </Card>
+      {currentList !== "Starred" && (
+        <Card className="p-4 mb-6 shadow-lg">
+          <CardHeader className="p-0 mb-3">
+            <CardTitle className="text-xl">Add New Task</CardTitle>
+          </CardHeader>
+          <CardContent className="flex gap-2 p-0 flex-wrap">
+            <Input
+              name="title"
+              placeholder="Title"
+              value={form.title}
+              onChange={handleChange}
+              className="grow"
+            />
+            <Input
+              name="description"
+              placeholder="Description"
+              value={form.description}
+              onChange={handleChange}
+              className="grow"
+            />
+            <Input
+              name="dueDate"
+              type="date"
+              value={form.dueDate}
+              onChange={handleChange}
+              className="grow"
+            />
+            <Button onClick={addTask}>Add</Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* === ACTIVE TASKS === */}
       <h3 className="text-xl font-semibold mb-3">
-        Active Tasks ({activeTasks.length})
+        {currentList === "Starred" ? "Starred Tasks" : "Active Tasks"} (
+        {activeTasks.length})
       </h3>
       <DndContext
         collisionDetection={closestCenter}
@@ -885,6 +956,7 @@ const Dashboard = () => {
                   key={task.id}
                   task={task}
                   toggleTask={toggleTask}
+                  toggleStar={toggleStar}
                   updateTaskDetails={updateTaskDetails}
                   deleteTask={deleteTask}
                   setDeadlineDialog={setDeadlineDialog}
@@ -903,7 +975,7 @@ const Dashboard = () => {
       </DndContext>
 
       {/* === COMPLETED TASKS === */}
-      {completedTasks.length > 0 && (
+      {completedTasks.length > 0 && currentList !== "Starred" && (
         <div className="mt-8">
           <button
             onClick={() => setShowCompleted(!showCompleted)}
@@ -935,6 +1007,7 @@ const Dashboard = () => {
                       key={task.id}
                       task={task}
                       toggleTask={toggleTask}
+                      toggleStar={toggleStar}
                       updateTaskDetails={updateTaskDetails}
                       deleteTask={deleteTask}
                       setDeadlineDialog={setDeadlineDialog}

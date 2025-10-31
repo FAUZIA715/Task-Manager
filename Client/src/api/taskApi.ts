@@ -40,6 +40,8 @@ export const updateTask = async (
     description: string;
     completed: boolean;
     order: number;
+    starred: boolean;
+    dueDate: number | undefined;
   }>
 ) => {
   const token = getToken();
@@ -62,5 +64,14 @@ export const deleteTaskApi = async (id: string) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("Failed to delete task");
+  return res.json();
+};
+
+export const fetchStarredTasks = async () => {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/tasks/starred`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch starred tasks");
   return res.json();
 };
